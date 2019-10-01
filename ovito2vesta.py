@@ -3,7 +3,7 @@ import sys
 
 if __name__ == "__main__":
 	if len(sys.argv) < 2:
-		print "Error: enter the file name"
+		print("Error: enter the file name")
 		sys.exit()
 	fileName = sys.argv[1]
 	
@@ -19,7 +19,7 @@ if __name__ == "__main__":
 
 	ofileName = ""
 	if len(sys.argv) == 2:
-		print "Using the default output file name: MoS2.xyz"
+		print("Using the default output file name: MoS2.xyz")
 		ofileName = "MoS2.xyz"
 	else:
 		ofileName = sys.argv[2]
