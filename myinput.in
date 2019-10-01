@@ -1,0 +1,4 @@
+matType MoS2
+phase 2H
+coordMethod userDefined
+outputStyle LAMMPS
