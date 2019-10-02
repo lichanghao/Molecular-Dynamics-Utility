@@ -587,9 +587,9 @@ if __name__ == '__main__':
     #------------------------------------------
     Li = Material2D()
     Li.readFromXYZ('./Li/Li_bcc_unit_cell.xyz')
-    r = 3
+    r = 9
     h = 15
-    Li.triclincLattice(4*r, 4*r, 3*h)
+    Li.triclincLattice(4*r, 4*r, 2*h)
     lx = 3.51
     def myCylinder(atom, norm):
          return Li.cylinder_cut(2*r*lx, 2*r*lx, r*lx, 0, 2*h*lx, atom, norm)
