@@ -149,13 +149,17 @@ class Material2D:
                 iatom = Atom(float(line[3]), float(line[4]), float(line[5]), int(line[1]), int(line[0]))
                 self.atomList.append(iatom)
 
-    def triclincLattice(self, l, m, n):
+    def triclincLattice(self, l, m, n, sup=False):
         unit = Material2D()
         unit.copy(self)
         p = 0
-        for i in range(l):
-            for j in range(m):
-                for k in range(n):
+        if sup == False:
+            lbegin = 0; mbegin = 0; nbegin = 0
+        else:
+            lbegin = -l; mbegin = -m; nbegin = 0
+        for i in range(lbegin, l):
+            for j in range(mbegin, m):
+                for k in range(nbegin, n):
                     if i == 0 and j == 0 and k == 0:
                         continue                  
                     t = i*self.box[0, :] + j*self.box[1, :] + k*self.box[2, :]
@@ -184,11 +188,11 @@ class Material2D:
             if charge == False:
                 for i in range(len(self.atomList)):
                     iatom = self.atomList[i]
-                    f.write("%s %s %12.6f %12.6f %12.6f\n"%(i+1, iatom.type, iatom.x, iatom.y, iatom.z))
+                    f.write("%8s %8s %12.6f %12.6f %12.6f\n"%(i+1, iatom.type, iatom.x, iatom.y, iatom.z))
             else:
                 for i in range(len(self.atomList)):
                     iatom = self.atomList[i]
-                    f.write("%s %s 0 %12.6f %12.6f %12.6f\n"%(i+1, iatom.type, iatom.x, iatom.y, iatom.z))
+                    f.write("%8s %8s %8s %12.6f %12.6f %12.6f\n"%(i+1, iatom.type, 0, iatom.x, iatom.y, iatom.z))
 
 
     def cut3D(self, rule, norm):
@@ -196,17 +200,25 @@ class Material2D:
         for atom in self.atomList:
             if rule(atom, norm):
                 new_list.append(atom)
+        a = len(self.atomList); b = len(new_list);
+        print("original # of atoms = %s, # of atoms after cut = %s"%(a, b))
         self.atomList = new_list
         return self
 
     def cylinder_cut(self, xx, yy, r, zlo, zhi, atom, norm):
-        if ((xx - atom.x)**2 + (yy - atom.y)**2 <= r**2) and (atom.z >= zlo) and (atom.z < zhi):
-            if norm == 1:
-                return 0
-            elif norm == 0:
-                return 1
+        if (atom.z >= zlo) and (atom.z < zhi):
+            if ((xx - atom.x)**2 + (yy - atom.y)**2 < r**2):
+                if norm == 1:
+                    return True
+                elif norm == -1:
+                    return False
             else:
-                print("cylinder_cut: false norm value\n")
+                if norm == 1:
+                    return False
+                elif norm == -1:
+                    return True
+        else:
+            return False
 
     def semi_sphere_cut(self, xx, yy, zz, r, atom, norm):
         if (xx - atom.x)**2 + (yy - atom.y)**2 + (zz - atom.z)**2 <= r**2 and atom.z >= zz:
@@ -494,6 +506,7 @@ class Material2D:
         fig = plt.figure()
         ax = fig.gca(projection='3d')
         xx = []; yy = []; zz = []
+        print("Ploting configuration: %s atoms in total"%len(self.atomList))
         for atom in self.atomList:
             xx.append(atom.x); yy.append(atom.y); zz.append(atom.z)
         ax.scatter(xx, yy, zz, '3r')
@@ -546,7 +559,7 @@ if __name__ == '__main__':
     myinput = InputParams(inFileName)
 
     # Generate configurations
-    # Li2CO3
+    # Bulk Li2CO3
     #------------------------------------------
     # Li2CO3 = Material2D()
     # Li2CO3.readFromXYZ('mp-3054_Li2CO3.xyz')
@@ -585,16 +598,52 @@ if __name__ == '__main__':
     #------------------------------------------  
     # Li nanopillar
     #------------------------------------------
-    Li = Material2D()
-    Li.readFromXYZ('./Li/Li_bcc_unit_cell.xyz')
-    r = 9
-    h = 15
-    Li.triclincLattice(4*r, 4*r, 2*h)
-    lx = 3.51
-    def myCylinder(atom, norm):
-         return Li.cylinder_cut(2*r*lx, 2*r*lx, r*lx, 0, 2*h*lx, atom, norm)
-    Li.cut3D(myCylinder, 0)
-    Li.output_triclinc("./Li/Li_nanopillar.xyz", "Li nanopillar", isTriclinc=False, charge=True)
+    # Li = Material2D()
+    # Li.readFromXYZ('./Li/Li_bcc_unit_cell.xyz')
+    # r = 9
+    # h = 15
+    # Li.triclincLattice(4*r, 4*r, 2*h)
+    # lx = 3.51
+    # def myCylinder(atom, norm):
+    #      return Li.cylinder_cut(2*r*lx, 2*r*lx, r*lx, 0, 2*h*lx, atom, norm)
+    # Li.cut3D(myCylinder, 1)
+    # Li.output_triclinc("./Li/Li_nanopillar.xyz", "Li nanopillar", isTriclinc=False, charge=True)
     # strain = 0.14
     # Li.pure_bending_mapping(r*lx/strain, 500)
+    #------------------------------------------  
+    # Li/Li2CO3 Nanopillar
+    #------------------------------------------
+    Li = Material2D()
+    Li2CO3 = Material2D()
+    Li.readFromXYZ('./Li/Li_bcc_unit_cell.xyz')
+    Li2CO3.readFromXYZ('./Li2CO3/Li2CO3_unit_cell.xyz')
+    r = 6
+    h = 15
+    t = 2
+    Li.triclincLattice(2*r, 2*r, 2*h, sup=True)
+    Li2CO3.triclincLattice(2*r, 2*r, 2*h, sup=True)
+    lx = 3.51
+    def myCylinder(atom, norm):
+         return Li.cylinder_cut(0*r*lx, 0*r*lx, r*lx, 0, 2*h*lx, atom, norm)
+    Li.cut3D(myCylinder, 1)
+    def myShell(atom, norm):
+        return Li2CO3.cylinder_cut(0*r*lx, 0*r*lx, r*lx, 0, 2*h*lx, atom, -norm) and Li2CO3.cylinder_cut(0*r*lx, 0*r*lx, (r+t)*lx, 0, 2*h*lx, atom, norm)
+    Li2CO3.cut3D(myShell, 1)
+    Li.merge(Li2CO3)
+    Li.plot()
+    Li2CO3.output_triclinc("./Li/Li_Li2CO3_nanopillar.xyz", "Li/Li2CO3 nanopillar", isTriclinc=False, charge=True)
+    #------------------------------------------  
+    # Li2CO3 Nanopillar
+    #------------------------------------------
+    # Li2CO3 = Material2D()
+    # Li2CO3.readFromXYZ('./Li2CO3/Li2CO3_unit_cell.xyz')
+    # r = 9
+    # h = 15
+    # Li2CO3.triclincLattice(3*r, 3*r, 3*h, sup=True)
+    # lx = 3.51
+    # def myCylinder(atom, norm):
+    #      return Li2CO3.cylinder_cut(0*r*lx, 0*r*lx, r*lx, 0, 2*h*lx, atom, norm)
+    # Li2CO3.cut3D(myCylinder, 1)
+    # Li2CO3.output_triclinc("./Li2CO3/Li2CO3_nanopillar.xyz", "Li2CO3 nanopillar", isTriclinc=False, charge=True)
+    # Li2CO3.plot()
 
