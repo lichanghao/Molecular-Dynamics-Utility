@@ -630,8 +630,7 @@ if __name__ == '__main__':
         return Li2CO3.cylinder_cut(0*r*lx, 0*r*lx, r*lx, 0, 2*h*lx, atom, -norm) and Li2CO3.cylinder_cut(0*r*lx, 0*r*lx, (r+t)*lx, 0, 2*h*lx, atom, norm)
     Li2CO3.cut3D(myShell, 1)
     Li.merge(Li2CO3)
-    Li.plot()
-    Li2CO3.output_triclinc("./Li/Li_Li2CO3_nanopillar.xyz", "Li/Li2CO3 nanopillar", isTriclinc=False, charge=True)
+    Li.output_triclinc("./Li/Li_Li2CO3_nanopillar.xyz", "Li/Li2CO3 nanopillar", isTriclinc=False, charge=True)
     #------------------------------------------  
     # Li2CO3 Nanopillar
     #------------------------------------------
